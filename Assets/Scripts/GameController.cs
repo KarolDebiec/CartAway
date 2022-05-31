@@ -20,6 +20,7 @@ public class GameController : MonoBehaviour
     public GameObject ramp;
     public GameObject fork;
     public Vector3 forkStartingPos;
+    public GameObject modificationSpot;
     void Start()
     {
         cartRB = cart.GetComponent<Rigidbody>();
@@ -32,6 +33,11 @@ public class GameController : MonoBehaviour
         {
             StartLaunch();
             test = false;
+        }
+        if (test2)
+        {
+            SetupModPhase();
+            test2 = false;
         }
         if (launchCart)
         {
@@ -82,11 +88,14 @@ public class GameController : MonoBehaviour
         cart.transform.position = startPos.transform.position;
         cart.transform.LookAt(targetPos.transform.position);
         landed = false;
+        fork.SetActive(true);
         fork.transform.parent = cart.transform;
         fork.transform.localPosition = forkStartingPos;
     }
     public void SetupModPhase()// setups modification phase for the cart
     {
-
+        fork.SetActive(false);
+        cart.transform.position = modificationSpot.transform.position;
+        cart.transform.rotation = new Quaternion(0,0,0,0);
     }
 }
