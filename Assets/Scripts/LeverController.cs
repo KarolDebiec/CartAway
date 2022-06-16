@@ -15,25 +15,14 @@ public class LeverController : MonoBehaviour
     public float MaxRotationBound;
     public float MinRotationBound;
     public bool tracking = false;
-    void Start()
-    {
-        
-    }
-
-    
-    void Update()
-    {
-        if(tracking)
-        {
-            RotateLever();
-        }
-    }
 
     public void RotateLever()
     {
         targetPosition = new Vector3(gameObject.transform.position.x, target.transform.position.y, target.transform.position.z);
         gameObject.transform.LookAt(targetPosition, Vector3.up);
         gameObject.transform.eulerAngles = gameObject.transform.eulerAngles - diffRotation;
+        
+        //gameObject.transform.eulerAngles = new Vector3(gameObject.transform.eulerAngles.x,0, gameObject.transform.eulerAngles.z);
         /*
         Debug.Log(gameObject.transform.rotation.x);
         if (gameObject.transform.rotation.x > MinRotationBound && gameObject.transform.rotation.x < MaxRotationBound)
@@ -58,5 +47,12 @@ public class LeverController : MonoBehaviour
     public void StopTrackHand()
     {
         tracking = false;
+    }
+    public void WhileTracking()
+    {
+        if (tracking)
+        {
+            RotateLever();
+        }
     }
 }
