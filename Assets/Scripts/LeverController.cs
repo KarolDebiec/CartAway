@@ -21,22 +21,6 @@ public class LeverController : MonoBehaviour
         targetPosition = new Vector3(gameObject.transform.position.x, target.transform.position.y, target.transform.position.z);
         gameObject.transform.LookAt(targetPosition, Vector3.up);
         gameObject.transform.eulerAngles = gameObject.transform.eulerAngles - diffRotation;
-        
-        //gameObject.transform.eulerAngles = new Vector3(gameObject.transform.eulerAngles.x,0, gameObject.transform.eulerAngles.z);
-        /*
-        Debug.Log(gameObject.transform.rotation.x);
-        if (gameObject.transform.rotation.x > MinRotationBound && gameObject.transform.rotation.x < MaxRotationBound)
-        {
-            gameObject.transform.Rotate(rotationSpeed, 0, 0, Space.Self);
-        }
-        else if (gameObject.transform.rotation.x >= MaxRotationBound && rotationSpeed < 0)
-        {
-            gameObject.transform.Rotate(rotationSpeed, 0, 0, Space.Self);
-        }
-        else if (gameObject.transform.rotation.x <= MaxRotationBound && rotationSpeed > 0)
-        {
-            gameObject.transform.Rotate(rotationSpeed, 0, 0, Space.Self);
-        }*/
     }
 
     public void StartTrackHand(GameObject trackTarget)

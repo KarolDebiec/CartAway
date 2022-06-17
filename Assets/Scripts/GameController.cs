@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class GameController : MonoBehaviour
 {
+    public float money; // games currency
+
     public bool changeGravity = false;
     public float force;
     public bool test= false;
@@ -17,7 +19,8 @@ public class GameController : MonoBehaviour
     public GameObject startPos;
     public GameObject targetPos;
     private float distance;
-    public float maxDistance;
+    public float maxDistance = 0; // max distance achieved in the last jump
+    public float overallMaxDistance = 0; // max distance achieved in the whole game
     private bool landed = false;
 
     public GameObject ramp;
@@ -26,12 +29,21 @@ public class GameController : MonoBehaviour
     public GameObject modificationSpot;
     public bool canModify = false;
 
+    public TextMesh recordAltitudeText;
+    public TextMesh recordDistanceText;
+    public TextMesh lastAltitudeText;
+    public TextMesh lastDistanceText;
 
     public List<ButtonController> buttons;// all the buttons in the scene(including cart and shop)
+
+    public GameObject VRRigCartPlace;
+    public GameObject VRRigShopPlace;
+    public GameObject VRRig;
     void Start()
     {
         cartRB = cart.GetComponent<Rigidbody>();
         cartControl = cart.GetComponent<CartController>();
+        SetScoreDisplay(0,0,0,0);
         SetupStart();
     }
 
@@ -68,6 +80,13 @@ public class GameController : MonoBehaviour
         if(cart.transform.position.y <= 0 && !landed)
         {
             OnLanded();
+        }
+        if(landed)
+        {
+            if(cartRB.velocity.magnitude < 4 && cartRB.velocity.magnitude != 0)
+            {
+                cartRB.velocity = new Vector3(0,0,0);
+            }
         }
         //Debug.Log(distance);
     }
@@ -108,6 +127,9 @@ public class GameController : MonoBehaviour
         cartControl.ResetCart();
         buttons[0].SetAvailable();
         buttons[1].SetUnavailable();
+        maxDistance = 0;
+        cartControl.maxAltitude = 0;
+        cartRB.drag = cartControl.dragValue;
     }
     public void SetupModPhase()// setups modification phase for the cart
     {
@@ -126,11 +148,45 @@ public class GameController : MonoBehaviour
     }
     public void OnLanded()
     {
-        cart.transform.position = new Vector3(cart.transform.position.x,0, cart.transform.position.z);
-        maxDistance = distance;
+        cartRB.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ | RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezePositionY; ;
+        cart.transform.position = new Vector3(0,0, cart.transform.position.z);
+        cart.transform.rotation = Quaternion.Euler(0, 0, 0);
+        if(maxDistance < distance)
+        {
+            maxDistance = distance;
+        }
+        if (maxDistance > overallMaxDistance)
+        {
+            overallMaxDistance = maxDistance;
+        }
         landed = true;
         cartControl.flying = false;
         buttons[1].SetAvailable();
         buttons[0].SetUnavailable();
+        cartControl.OnCartLanded();
+        cartRB.drag = 2;
+        SetScoreDisplay(overallMaxDistance, cartControl.overallMaxAltitude, maxDistance, cartControl.maxAltitude);
+    }
+    public void SetScoreDisplay(float recordDist, float recordAlt, float dist, float alt)
+    {
+        recordAltitudeText.text = recordAlt.ToString("F2") + " m";
+        recordDistanceText.text = recordDist.ToString("F2") + " m";
+        lastAltitudeText.text = alt.ToString("F2") + " m";
+        lastDistanceText.text = dist.ToString("F2") + " m";
+    }
+
+    public void ChangeModeToShop()
+    {
+        VRRig.transform.parent = cart.transform.parent;
+        VRRig.transform.position = VRRigShopPlace.transform.position;
+        VRRig.transform.rotation = VRRigShopPlace.transform.rotation;
+        Debug.Log("jump to shop");
+    }
+    public void ChangeModeToCart()
+    {
+        VRRig.transform.parent = cart.transform;
+        VRRig.transform.position = VRRigCartPlace.transform.position;
+        VRRig.transform.rotation = VRRigCartPlace.transform.rotation;
+        Debug.Log("jump to cart");
     }
 }

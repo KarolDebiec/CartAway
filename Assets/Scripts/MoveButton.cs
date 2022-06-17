@@ -7,22 +7,32 @@ public class MoveButton : MonoBehaviour
     public GameObject button;//referance to button in scene (collider have to be out of button so it doesnt jump around)
     public Vector3 pressedLocalPos;
     private Vector3 unpressedLocalPos;
-    public bool canPress;
+    public bool canPress = true;
+    public GameController gameController;
+    public bool mode;// true - move to shop, false - move to cart
     void Start()
     {
         unpressedLocalPos = button.transform.localPosition;
     }
 
+
     public void PressButton()
     {
         if (canPress)
         {
-            button.transform.localPosition = pressedLocalPos;
-            
+            //button.transform.localPosition = pressedLocalPos;
+            if (mode)
+            {
+                gameController.ChangeModeToShop();
+            }
+            else
+            {
+                gameController.ChangeModeToCart();
+            }
         }
     }
     public void UnpressButton()
     {
-        button.transform.localPosition = unpressedLocalPos;
+        //button.transform.localPosition = unpressedLocalPos;
     }
 }

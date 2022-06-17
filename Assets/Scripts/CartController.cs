@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class CartController : MonoBehaviour
 {
-    public float Debug1;
+
     public float Debug2;
+    public float Debug3;
     public bool flying = false;
     public GameObject tiltLewer;
     public float tilt;
@@ -14,35 +15,102 @@ public class CartController : MonoBehaviour
     private Vector3 rotationOffset; // amount to rotate every frame
     public bool rocketBoost;
     public float rocketBoostForce;
+    public float rocketBoostFuel = 10f;
     public GameObject tiltDisplay;
     public float speed;
     public GameObject speedometr;
-    public float maxSpeed;
+    public float maxSpeed; // used to set max Speed of speedometr
     public float maxSpeedAchieved;
     public float maxFrontAngle; //from 0 to 360 this should be about 80
     public float maxBackAngle; //this should be about 280
-    public float dragForce;
-    public float cartAngle;
+
     public LeverController leverController;
+    public float altitude;
+    public float maxAltitude; // max altitude achieved in the last jump
+    public float overallMaxAltitude; // max altitude achieved in the whole game
+    public TextMesh altitudeText;
+
+
+    private float cartAngle;
+    public float realCartAngle;
+    private float calcLift;
+    public float liftMultiplier = 10;
+    public bool haveWings = false;
+    public float dragValue = 0.3f;
+    public float additionalDragValue = 0.3f;
+    public float additionalForceOnGoingDownValue = 0.3f;
+    public float additionalForceOnGoingUpValue = 0.3f;
+    public float speedRelation;
+    public Vector3 staticLiftForce;
+    public Vector3 liftForce;
+
+    public List<GameObject> wings;
+    public List<GameObject> bodies;
+    public List<GameObject> boosters;
+    public GameObject activeWing;
+    public GameObject activeBody;
+    public GameObject activeBooster;
+    public GameObject fuelDisplay;
+    public GameObject fuelDisplayTop;
+    public GameObject fuelDisplayBottom;
     void Start()
     {
         rb = gameObject.GetComponent<Rigidbody>();
+        altitudeText.text = "0 m";
+        UpgradeCart(1, 1);
+        UpgradeCart(2, 0);
+        UpgradeCart(3, 0);
     }
 
     private void FixedUpdate()
     {
-        if (rocketBoost)
+        if (rocketBoost && flying)
         {
             rb.AddForce(gameObject.transform.forward * rocketBoostForce);
+            rocketBoostFuel -= Time.deltaTime;
+            if (rocketBoostFuel <= 0)
+            {
+                StopRocketBoost();
+            }
         }
         cartAngle = gameObject.transform.localEulerAngles.x;
+        if (gameObject.transform.localRotation.x > 0)
+        {
+            realCartAngle = cartAngle;
+        }
+        else
+        {
+            realCartAngle = -(360-cartAngle);
+        }
+        calcLift = (realCartAngle / 90)* Mathf.PI;
         if(flying)
         {
-            //rb.AddForce(-transform.forward * dragForce);
+            altitudeText.text = altitude.ToString("F1") + " m";
+        }
+        if (haveWings && flying) // to do mostly
+        {
+            if(calcLift <= 0)
+            {
+                liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
+                Debug.Log("here goes up");
+                //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue * speed / speedRelation);
+            }
+            else if (calcLift > 0)
+            {
+                liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation);
+                //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingDownValue * speed / speedRelation);
+            }
+            rb.AddForce(liftForce);
         }
     }
     void Update()
     {
+        SetFuelDisplay(Debug2,Debug3);
+        altitude = gameObject.transform.position.y;
+        if(altitude > maxAltitude)
+        {
+            maxAltitude = altitude;
+        }
         /*if(tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x>180f)
         {
             tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x - 360;
@@ -52,7 +120,6 @@ public class CartController : MonoBehaviour
             tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x;
         }*/
         leverController.WhileTracking();
-        Debug1 = tiltLewer.transform.localEulerAngles.y;
         if (flying)
         {
             if (tiltLewer.transform.localEulerAngles.y == 180)
@@ -86,7 +153,6 @@ public class CartController : MonoBehaviour
                 gameObject.transform.Rotate(rotationOffset);
             }
         }
-        Debug2 = tiltLewer.transform.localEulerAngles.x;
         //rb.AddTorque(transform.right * tiltMultiplier * tilt); this or the line beneath
         //gameObject.transform.Rotate(rotationOffset);
         tiltDisplay.transform.localRotation = Quaternion.Euler(gameObject.transform.rotation.eulerAngles.x-90, -90, 90);
@@ -117,5 +183,194 @@ public class CartController : MonoBehaviour
     {
         tiltLewer.transform.localRotation = Quaternion.Euler(0, 0, 0);
         maxSpeedAchieved = 0;
+    }
+    public void StartRocketBoost()
+    {
+        rocketBoost = true;
+        //zalaczyc particle i dzwiek
+    }
+    public void StopRocketBoost()
+    {
+        rocketBoost = false;
+        //wylaczyc particle i dzwiek
+    }
+    public void OnCartLanded()
+    {
+        altitudeText.text = "0 m";
+        if(maxAltitude > overallMaxAltitude)
+        {
+            overallMaxAltitude = maxAltitude;
+        }
+        if(rocketBoost)
+        {
+            StopRocketBoost();
+        }
+    }
+
+    public void SetFuelDisplay(float fuel,float maxFuel)
+    {
+        if (fuel < maxFuel)
+        {
+            float BottomScale = (fuel / maxFuel) * 2;
+            fuelDisplayTop.transform.localScale = new Vector3(1, 1, 2f - BottomScale);
+            fuelDisplayBottom.transform.localScale = new Vector3(1, 1, BottomScale);
+        }
+        else
+        {
+            fuelDisplayTop.transform.localScale = new Vector3(1, 1, 0);
+            fuelDisplayBottom.transform.localScale = new Vector3(1, 1, 1);
+        }
+    }
+    public void UpgradeCart(int upgradeType,int upgradeLevel) //by default there are 3 upgrades for cart(booster,body,wings) and each have 4 levels of upgrade (none,lvl1,lvl2,lvl3)
+    {
+        switch (upgradeType)
+        {
+            case 1:
+                switch (upgradeLevel)
+                {
+                    case 0:
+                        if(activeBooster != null)
+                        {
+                            activeBooster.SetActive(false);
+                        }
+                        fuelDisplay.SetActive(false);
+                        //change parameters here
+                        break; 
+
+                    case 1:
+                        if (activeBooster != null)
+                        {
+                            activeBooster.SetActive(false);
+                        }
+                        activeBooster = boosters[0];
+                        activeBooster.SetActive(true);
+                        fuelDisplay.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 2:
+                        if (activeBooster != null)
+                        {
+                            activeBooster.SetActive(false);
+                        }
+                        activeBooster = boosters[1];
+                        activeBooster.SetActive(true);
+                        fuelDisplay.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 3:
+                        if (activeBooster != null)
+                        {
+                            activeBooster.SetActive(false);
+                        }
+                        activeBooster = boosters[2];
+                        activeBooster.SetActive(true);
+                        fuelDisplay.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    default:
+                        Debug.Log("wrong level in upgrade cart function");
+                        break;
+                }
+                break;
+
+            case 2:
+                switch (upgradeLevel)
+                {
+                    case 0:
+                        if (activeBody != null)
+                        {
+                            activeBody.SetActive(false);
+                        }
+                        break;
+
+                    case 1:
+                        if (activeBody != null)
+                        {
+                            activeBody.SetActive(false);
+                        }
+                        activeBody = bodies[0];
+                        activeBody.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 2:
+                        if (activeBody != null)
+                        {
+                            activeBody.SetActive(false);
+                        }
+                        activeBody = bodies[1];
+                        activeBody.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 3:
+                        if (activeBody != null)
+                        {
+                            activeBody.SetActive(false);
+                        }
+                        activeBody = bodies[2];
+                        activeBody.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    default:
+                        Debug.Log("wrong level in upgrade cart function");
+                        break;
+                }
+                break;
+
+            case 3:
+                switch (upgradeLevel)
+                {
+                    case 0:
+                        if (activeWing != null)
+                        {
+                            activeWing.SetActive(false);
+                        }
+                        break;
+
+                    case 1:
+                        if (activeWing != null)
+                        {
+                            activeWing.SetActive(false);
+                        }
+                        activeWing = wings[0];
+                        activeWing.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 2:
+                        if (activeWing != null)
+                        {
+                            activeWing.SetActive(false);
+                        }
+                        activeWing = wings[1];
+                        activeWing.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    case 3:
+                        if (activeWing != null)
+                        {
+                            activeWing.SetActive(false);
+                        }
+                        activeWing = wings[2];
+                        activeWing.SetActive(true);
+                        //change parameters here
+                        break;
+
+                    default:
+                        Debug.Log("wrong level in upgrade cart function");
+                        break;
+                }
+                break;
+
+            default:
+                Debug.Log("wrong type in upgrade cart function");
+                break;
+        }
     }
 }
