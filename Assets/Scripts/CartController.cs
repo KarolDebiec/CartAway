@@ -4,7 +4,9 @@ using UnityEngine;
 
 public class CartController : MonoBehaviour
 {
+    public bool isStatic = false; // used while in upgrade shop
 
+    public GameController gameController;
     public float Debug2;
     public float Debug3;
     public bool flying = false;
@@ -16,6 +18,7 @@ public class CartController : MonoBehaviour
     public bool rocketBoost;
     public float rocketBoostForce;
     public float rocketBoostFuel = 10f;
+    public float maxRocketBoostFuel = 10f;
     public GameObject tiltDisplay;
     public float speed;
     public GameObject speedometr;
@@ -57,118 +60,127 @@ public class CartController : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         altitudeText.text = "0 m";
-        UpgradeCart(1, 1);
+        UpgradeCart(1, 0);
         UpgradeCart(2, 0);
         UpgradeCart(3, 0);
+        rocketBoostFuel = maxRocketBoostFuel;
+        //load jesli dodamy zapis
     }
 
     private void FixedUpdate()
     {
-        if (rocketBoost && flying)
+        if (!isStatic)
         {
-            rb.AddForce(gameObject.transform.forward * rocketBoostForce);
-            rocketBoostFuel -= Time.deltaTime;
-            if (rocketBoostFuel <= 0)
+            if (rocketBoost && flying)
             {
-                StopRocketBoost();
+                rb.AddForce(gameObject.transform.forward * rocketBoostForce);
+                SetFuelDisplay(rocketBoostFuel, maxRocketBoostFuel);
+                rocketBoostFuel -= Time.deltaTime;
+                if (rocketBoostFuel <= 0)
+                {
+                    StopRocketBoost();
+                }
             }
-        }
-        cartAngle = gameObject.transform.localEulerAngles.x;
-        if (gameObject.transform.localRotation.x > 0)
-        {
-            realCartAngle = cartAngle;
-        }
-        else
-        {
-            realCartAngle = -(360-cartAngle);
-        }
-        calcLift = (realCartAngle / 90)* Mathf.PI;
-        if(flying)
-        {
-            altitudeText.text = altitude.ToString("F1") + " m";
-        }
-        if (haveWings && flying) // to do mostly
-        {
-            if(calcLift <= 0)
+            cartAngle = gameObject.transform.localEulerAngles.x;
+            if (gameObject.transform.localRotation.x > 0)
             {
-                liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
-                Debug.Log("here goes up");
-                //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue * speed / speedRelation);
+                realCartAngle = cartAngle;
             }
-            else if (calcLift > 0)
+            else
             {
-                liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation);
-                //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingDownValue * speed / speedRelation);
+                realCartAngle = -(360 - cartAngle);
             }
-            rb.AddForce(liftForce);
+            calcLift = (realCartAngle / 90) * Mathf.PI;
+            if (flying)
+            {
+                altitudeText.text = altitude.ToString("F1") + " m";
+            }
+            if (haveWings && flying) // to do mostly
+            {
+                if (calcLift <= 0)
+                {
+                    liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
+                    Debug.Log("here goes up");
+                    //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue * speed / speedRelation);
+                }
+                else if (calcLift > 0)
+                {
+                    liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation);
+                    //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingDownValue * speed / speedRelation);
+                }
+                rb.AddForce(liftForce);
+            }
         }
     }
     void Update()
     {
-        SetFuelDisplay(Debug2,Debug3);
-        altitude = gameObject.transform.position.y;
-        if(altitude > maxAltitude)
+        if(!isStatic)
         {
-            maxAltitude = altitude;
-        }
-        /*if(tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x>180f)
-        {
-            tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x - 360;
-        }
-        else
-        {
-            tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x;
-        }*/
-        leverController.WhileTracking();
-        if (flying)
-        {
-            if (tiltLewer.transform.localEulerAngles.y == 180)
+            altitude = gameObject.transform.position.y;
+            if (altitude > maxAltitude)
             {
-                tilt = tiltLewer.transform.localEulerAngles.x;
-                if (tilt > 180 && tilt <= 360)
-                {
-                    tilt = -(360 - tilt);
-                }
-                tilt = -tilt;
+                maxAltitude = altitude;
+            }
+            /*if(tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x>180f)
+            {
+                tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x - 360;
             }
             else
             {
-                tilt = tiltLewer.transform.localEulerAngles.x;
-                if (tilt > 180 && tilt <= 360)
+                tilt = tiltLewer.transform.eulerAngles.x - gameObject.transform.eulerAngles.x;
+            }*/
+            leverController.WhileTracking();
+            if (flying)
+            {
+                if (tiltLewer.transform.localEulerAngles.y == 180)
                 {
-                    tilt = -(360 - tilt);
+                    tilt = tiltLewer.transform.localEulerAngles.x;
+                    if (tilt > 180 && tilt <= 360)
+                    {
+                        tilt = -(360 - tilt);
+                    }
+                    tilt = -tilt;
+                }
+                else
+                {
+                    tilt = tiltLewer.transform.localEulerAngles.x;
+                    if (tilt > 180 && tilt <= 360)
+                    {
+                        tilt = -(360 - tilt);
+                    }
+                }
+                rotationOffset = new Vector3(tilt * tiltMultiplier * Time.deltaTime, 0, 0);
+                if (gameObject.transform.localEulerAngles.x < maxFrontAngle || gameObject.transform.localEulerAngles.x > maxBackAngle)
+                {
+                    gameObject.transform.Rotate(rotationOffset);
+                }
+                else if (gameObject.transform.localEulerAngles.x >= maxFrontAngle && rotationOffset.x < 0 && gameObject.transform.localEulerAngles.x < 180)
+                {
+                    gameObject.transform.Rotate(rotationOffset);
+                }
+                else if (gameObject.transform.localEulerAngles.x <= maxBackAngle && rotationOffset.x > 0 && gameObject.transform.localEulerAngles.x > 180)
+                {
+                    gameObject.transform.Rotate(rotationOffset);
                 }
             }
-            rotationOffset = new Vector3(tilt * tiltMultiplier*Time.deltaTime, 0, 0);
-            if (gameObject.transform.localEulerAngles.x < maxFrontAngle || gameObject.transform.localEulerAngles.x > maxBackAngle)
+            //rb.AddTorque(transform.right * tiltMultiplier * tilt); this or the line beneath
+            //gameObject.transform.Rotate(rotationOffset);
+            tiltDisplay.transform.localRotation = Quaternion.Euler(gameObject.transform.rotation.eulerAngles.x - 90, -90, 90);
+            speed = rb.velocity.magnitude;
+            if (speed >= maxSpeed)
             {
-                gameObject.transform.Rotate(rotationOffset);
+                speedometr.transform.localRotation = Quaternion.Euler(0, 0, -360);
             }
-            else if (gameObject.transform.localEulerAngles.x >= maxFrontAngle && rotationOffset.x < 0 && gameObject.transform.localEulerAngles.x < 180)
+            else
             {
-                gameObject.transform.Rotate(rotationOffset);
+                speedometr.transform.localRotation = Quaternion.Euler(0, 0, (speed / maxSpeed) * -360);
             }
-            else if (gameObject.transform.localEulerAngles.x <= maxBackAngle && rotationOffset.x > 0 && gameObject.transform.localEulerAngles.x > 180)
+            if (speed >= maxSpeedAchieved)
             {
-                gameObject.transform.Rotate(rotationOffset);
+                maxSpeedAchieved = speed;
             }
         }
-        //rb.AddTorque(transform.right * tiltMultiplier * tilt); this or the line beneath
-        //gameObject.transform.Rotate(rotationOffset);
-        tiltDisplay.transform.localRotation = Quaternion.Euler(gameObject.transform.rotation.eulerAngles.x-90, -90, 90);
-        speed = rb.velocity.magnitude;
-        if(speed >= maxSpeed)
-        {
-            speedometr.transform.localRotation = Quaternion.Euler(0, 0, -360);
-        }
-        else
-        {
-            speedometr.transform.localRotation = Quaternion.Euler(0, 0, (speed / maxSpeed) * -360);
-        }
-        if (speed >= maxSpeedAchieved)
-        {
-            maxSpeedAchieved = speed;
-        }
+        
     }
 
     public void AddBoost(float force)
@@ -181,8 +193,10 @@ public class CartController : MonoBehaviour
     }
     public void ResetCart()
     {
+        rocketBoostFuel = maxRocketBoostFuel;
         tiltLewer.transform.localRotation = Quaternion.Euler(0, 0, 0);
         maxSpeedAchieved = 0;
+        SetFuelDisplay(1, 1);
     }
     public void StartRocketBoost()
     {
@@ -191,6 +205,7 @@ public class CartController : MonoBehaviour
     }
     public void StopRocketBoost()
     {
+        gameController.NoBoostFuel();
         rocketBoost = false;
         //wylaczyc particle i dzwiek
     }
@@ -218,10 +233,10 @@ public class CartController : MonoBehaviour
         else
         {
             fuelDisplayTop.transform.localScale = new Vector3(1, 1, 0);
-            fuelDisplayBottom.transform.localScale = new Vector3(1, 1, 1);
+            fuelDisplayBottom.transform.localScale = new Vector3(1, 1, 2);
         }
     }
-    public void UpgradeCart(int upgradeType,int upgradeLevel) //by default there are 3 upgrades for cart(booster,body,wings) and each have 4 levels of upgrade (none,lvl1,lvl2,lvl3)
+    public void UpgradeCart(int upgradeType,int upgradeLevel) //by default there are 4 upgrades for cart(booster,body,wings,booster fuel) and each have 4 levels of upgrade (none,lvl1,lvl2,lvl3) and 10 levels for fuel
     {
         switch (upgradeType)
         {
@@ -235,6 +250,7 @@ public class CartController : MonoBehaviour
                         }
                         fuelDisplay.SetActive(false);
                         //change parameters here
+
                         break; 
 
                     case 1:
@@ -246,6 +262,7 @@ public class CartController : MonoBehaviour
                         activeBooster.SetActive(true);
                         fuelDisplay.SetActive(true);
                         //change parameters here
+                        rocketBoostForce = 20;
                         break;
 
                     case 2:
@@ -257,6 +274,7 @@ public class CartController : MonoBehaviour
                         activeBooster.SetActive(true);
                         fuelDisplay.SetActive(true);
                         //change parameters here
+                        rocketBoostForce = 40;
                         break;
 
                     case 3:
@@ -268,6 +286,7 @@ public class CartController : MonoBehaviour
                         activeBooster.SetActive(true);
                         fuelDisplay.SetActive(true);
                         //change parameters here
+                        rocketBoostForce = 100;
                         break;
 
                     default:
@@ -284,6 +303,7 @@ public class CartController : MonoBehaviour
                         {
                             activeBody.SetActive(false);
                         }
+                        dragValue = 0.30f;
                         break;
 
                     case 1:
@@ -294,6 +314,7 @@ public class CartController : MonoBehaviour
                         activeBody = bodies[0];
                         activeBody.SetActive(true);
                         //change parameters here
+                        dragValue = 0.25f;
                         break;
 
                     case 2:
@@ -304,6 +325,7 @@ public class CartController : MonoBehaviour
                         activeBody = bodies[1];
                         activeBody.SetActive(true);
                         //change parameters here
+                        dragValue = 0.20f;
                         break;
 
                     case 3:
@@ -314,6 +336,7 @@ public class CartController : MonoBehaviour
                         activeBody = bodies[2];
                         activeBody.SetActive(true);
                         //change parameters here
+                        dragValue = 0.10f;
                         break;
 
                     default:
@@ -330,6 +353,7 @@ public class CartController : MonoBehaviour
                         {
                             activeWing.SetActive(false);
                         }
+                        haveWings = false;
                         break;
 
                     case 1:
@@ -340,6 +364,8 @@ public class CartController : MonoBehaviour
                         activeWing = wings[0];
                         activeWing.SetActive(true);
                         //change parameters here
+                        haveWings = true;
+                        liftMultiplier = 5;
                         break;
 
                     case 2:
@@ -350,6 +376,8 @@ public class CartController : MonoBehaviour
                         activeWing = wings[1];
                         activeWing.SetActive(true);
                         //change parameters here
+                        haveWings = true;
+                        liftMultiplier = 6;
                         break;
 
                     case 3:
@@ -360,6 +388,8 @@ public class CartController : MonoBehaviour
                         activeWing = wings[2];
                         activeWing.SetActive(true);
                         //change parameters here
+                        haveWings = true;
+                        liftMultiplier = 8;
                         break;
 
                     default:
@@ -367,10 +397,65 @@ public class CartController : MonoBehaviour
                         break;
                 }
                 break;
+            case 4:
+                switch (upgradeLevel)
+                {
+                    case 0:
+                        maxRocketBoostFuel = 3;
+                        break;
 
+                    case 1:
+                        maxRocketBoostFuel = 4;
+                        break;
+
+                    case 2:
+                        maxRocketBoostFuel = 5;
+                        break;
+
+                    case 3:
+                        maxRocketBoostFuel = 6;
+                        break;
+
+                    case 4:
+                        maxRocketBoostFuel = 7;
+                        break;
+
+                    case 5:
+                        maxRocketBoostFuel = 8;
+                        break;
+
+                    case 6:
+                        maxRocketBoostFuel = 9;
+                        break;
+
+                    case 7:
+                        maxRocketBoostFuel = 10;
+                        break;
+
+                    case 8:
+                        maxRocketBoostFuel = 12;
+                        break;
+
+                    case 9:
+                        maxRocketBoostFuel = 14;
+                        break;
+
+                    case 10:
+                        maxRocketBoostFuel = 18;
+                        break;
+
+                    default:
+                        Debug.Log("wrong level in upgrade cart function");
+                        break;
+                }
+                break;
             default:
                 Debug.Log("wrong type in upgrade cart function");
                 break;
         }
+    }
+    public void SetStatic(bool value)
+    {
+        isStatic = value;
     }
 }

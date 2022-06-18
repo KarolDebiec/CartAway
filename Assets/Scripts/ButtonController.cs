@@ -15,7 +15,7 @@ public class ButtonController : MonoBehaviour
     private bool canPress = true; // if above is true then changes to false after first press
     public MeshRenderer meshRenderer;
 
-    public List<bool> buttonTypes;// all button types 0-launch , 1-reset
+    public List<bool> buttonTypes;// all button types 0-launch , 1-reset, 2-start booster, 3-stop booster
     void Start()
     {
         meshRenderer = button.GetComponent<MeshRenderer>();
@@ -32,9 +32,17 @@ public class ButtonController : MonoBehaviour
             {
                 gameController.StartLaunch();
             }
-            if (buttonTypes[1] == true)
+            else if (buttonTypes[1] == true)
             {
                 gameController.SetupStart();
+            }
+            else if (buttonTypes[2] == true)
+            {
+                gameController.StartBoost();
+            }
+            else if (buttonTypes[3] == true)
+            {
+                gameController.StopBoost();
             }
         }
     }
@@ -49,6 +57,7 @@ public class ButtonController : MonoBehaviour
         {
             SetAvailable();
         }
+
     }
     public void SetAvailable()
     {

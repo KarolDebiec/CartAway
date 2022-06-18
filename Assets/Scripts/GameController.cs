@@ -5,6 +5,7 @@ using UnityEngine;
 public class GameController : MonoBehaviour
 {
     public float money; // games currency
+    public float lastEarnedMoney;
 
     public bool changeGravity = false;
     public float force;
@@ -33,18 +34,25 @@ public class GameController : MonoBehaviour
     public TextMesh recordDistanceText;
     public TextMesh lastAltitudeText;
     public TextMesh lastDistanceText;
+    public TextMesh totalMoneyText;
+    public TextMesh lastEarnedMoneyText;
 
     public List<ButtonController> buttons;// all the buttons in the scene(including cart and shop)
 
     public GameObject VRRigCartPlace;
     public GameObject VRRigShopPlace;
     public GameObject VRRig;
+    public GameObject VRRigRaycast;
+
+    public MoveButton goToShopButton;
+    public MoveButton goToCartButton;
     void Start()
     {
         cartRB = cart.GetComponent<Rigidbody>();
         cartControl = cart.GetComponent<CartController>();
-        SetScoreDisplay(0,0,0,0);
+        SetScoreDisplay(0,0,0,0,0,0);
         SetupStart();
+        SetupModPhase();
     }
 
     void FixedUpdate()
@@ -106,6 +114,9 @@ public class GameController : MonoBehaviour
     {
         cartRB.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
         launchCart = true;
+        goToShopButton.canPress = false;
+        buttons[2].SetAvailable();
+        buttons[3].SetUnavailable();
     }
     public void Launched() // called once the cart reaches target pos at the ramp
     {
@@ -127,18 +138,30 @@ public class GameController : MonoBehaviour
         cartControl.ResetCart();
         buttons[0].SetAvailable();
         buttons[1].SetUnavailable();
+        buttons[2].SetUnavailable();
+        buttons[3].SetUnavailable();
+        goToShopButton.canPress = true;
+        goToCartButton.canPress = false;
         maxDistance = 0;
         cartControl.maxAltitude = 0;
         cartRB.drag = cartControl.dragValue;
+        goToShopButton.canPress = true;
+        cartControl.SetStatic(false);
     }
     public void SetupModPhase()// setups modification phase for the cart
     {
+        cartControl.SetStatic(true);
         cartRB.useGravity = false;
         cartRB.constraints = RigidbodyConstraints.FreezeAll;
         landed = false;
         fork.SetActive(false);
+        buttons[0].SetUnavailable();
+        buttons[1].SetUnavailable();
+        buttons[2].SetUnavailable();
+        buttons[3].SetUnavailable();
+        goToShopButton.canPress = false;
+        goToCartButton.canPress = true;
         cart.transform.position = modificationSpot.transform.position;
-        //cart.transform.rotation = new Quaternion(0,0,0,0);
         cart.transform.rotation = Quaternion.Euler(0, 0, 0);
         canModify = true;
     }
@@ -163,16 +186,21 @@ public class GameController : MonoBehaviour
         cartControl.flying = false;
         buttons[1].SetAvailable();
         buttons[0].SetUnavailable();
+        buttons[2].SetUnavailable();
+        buttons[3].SetUnavailable();
         cartControl.OnCartLanded();
         cartRB.drag = 2;
-        SetScoreDisplay(overallMaxDistance, cartControl.overallMaxAltitude, maxDistance, cartControl.maxAltitude);
+        AddMoney(maxDistance, cartControl.maxAltitude);
+        SetScoreDisplay(overallMaxDistance, cartControl.overallMaxAltitude, maxDistance, cartControl.maxAltitude,money,lastEarnedMoney);
     }
-    public void SetScoreDisplay(float recordDist, float recordAlt, float dist, float alt)
+    public void SetScoreDisplay(float recordDist, float recordAlt, float dist, float alt, float money, float earnedMoney)
     {
         recordAltitudeText.text = recordAlt.ToString("F2") + " m";
         recordDistanceText.text = recordDist.ToString("F2") + " m";
         lastAltitudeText.text = alt.ToString("F2") + " m";
         lastDistanceText.text = dist.ToString("F2") + " m";
+        totalMoneyText.text = money.ToString("F2") + " $";
+        lastEarnedMoneyText.text = earnedMoney.ToString("F2") + " $";
     }
 
     public void ChangeModeToShop()
@@ -180,13 +208,41 @@ public class GameController : MonoBehaviour
         VRRig.transform.parent = cart.transform.parent;
         VRRig.transform.position = VRRigShopPlace.transform.position;
         VRRig.transform.rotation = VRRigShopPlace.transform.rotation;
-        Debug.Log("jump to shop");
+        VRRigRaycast.SetActive(true);
+        SetupModPhase();
+        Debug.Log("jumped to shop");
     }
     public void ChangeModeToCart()
     {
+        VRRigRaycast.SetActive(false);
+        SetupStart();
         VRRig.transform.parent = cart.transform;
         VRRig.transform.position = VRRigCartPlace.transform.position;
         VRRig.transform.rotation = VRRigCartPlace.transform.rotation;
-        Debug.Log("jump to cart");
+        Debug.Log("jumped to cart");
+    }
+    public void AddMoney(float dist,float alt)
+    {
+        float moneyEarned = (dist +alt)*1.5f;
+        lastEarnedMoney = moneyEarned;
+        money += moneyEarned;
+    }
+
+    public void StartBoost()
+    {
+        cartControl.StartRocketBoost();
+        buttons[2].SetUnavailable();
+        buttons[3].SetAvailable();
+    }
+    public void StopBoost()
+    {
+        cartControl.StopRocketBoost();
+        buttons[2].SetAvailable();
+        buttons[3].SetUnavailable();
+    }
+    public void NoBoostFuel()
+    {
+        buttons[2].SetUnavailable();
+        buttons[3].SetUnavailable();
     }
 }
