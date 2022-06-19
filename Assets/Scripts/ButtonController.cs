@@ -15,6 +15,7 @@ public class ButtonController : MonoBehaviour
     private bool canPress = true; // if above is true then changes to false after first press
     public MeshRenderer meshRenderer;
 
+    private bool isPressed = false;
     public List<bool> buttonTypes;// all button types 0-launch , 1-reset, 2-start booster, 3-stop booster
     void Start()
     {
@@ -42,21 +43,26 @@ public class ButtonController : MonoBehaviour
             }
             else if (buttonTypes[3] == true)
             {
-                gameController.StopBoost();
+                gameController.StopBoostTemporary();
             }
             gameController.PlayButtonClickSound();
+            isPressed = true;
         }
     }
     public void UnpressButton()
     {
-        button.transform.localPosition = unpressedLocalPos;
-        if(oneTimeButton)
+        if(isPressed)
         {
-            SetUnavailable();
-        }
-        else
-        {
-            SetAvailable();
+            button.transform.localPosition = unpressedLocalPos;
+            if (oneTimeButton)
+            {
+                SetUnavailable();
+            }
+            else
+            {
+                SetAvailable();
+            }
+            isPressed = false;
         }
 
     }

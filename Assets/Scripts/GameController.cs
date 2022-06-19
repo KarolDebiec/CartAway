@@ -243,7 +243,7 @@ public class GameController : MonoBehaviour
     }
     public void AddMoney(float dist,float alt)
     {
-        float moneyEarned = (dist +alt)*1.5f;
+        float moneyEarned = (dist +alt)* (dist + alt) * 0.02f;
         lastEarnedMoney = moneyEarned;
         money += moneyEarned;
     }
@@ -258,6 +258,13 @@ public class GameController : MonoBehaviour
     public void StopBoost()
     {
         cartControl.StopRocketBoost();
+        buttons[2].SetAvailable();
+        buttons[3].SetUnavailable();
+        boosterSource.Stop();
+    }
+    public void StopBoostTemporary()
+    {
+        cartControl.StopRocketBoostTemporary();
         buttons[2].SetAvailable();
         buttons[3].SetUnavailable();
         boosterSource.Stop();

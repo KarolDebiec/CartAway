@@ -100,7 +100,7 @@ public class CartController : MonoBehaviour
                 if (calcLift <= 0)
                 {
                     //liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
-                    liftForce = (Vector3.up * liftMultiplier * -calcLift) + staticLiftForce;
+                    liftForce = ((Vector3.up * liftMultiplier * -calcLift) + staticLiftForce) * Time.deltaTime;
                     Debug.Log("here goes up");
                     //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue * speed / speedRelation);
                     if(rb.velocity.z > 5)
@@ -214,6 +214,11 @@ public class CartController : MonoBehaviour
     public void StopRocketBoost()
     {
         gameController.NoBoostFuel();
+        rocketBoost = false;
+        //wylaczyc particle i dzwiek
+    }
+    public void StopRocketBoostTemporary()
+    {
         rocketBoost = false;
         //wylaczyc particle i dzwiek
     }
