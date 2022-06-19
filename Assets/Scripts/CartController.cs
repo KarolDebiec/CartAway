@@ -99,14 +99,22 @@ public class CartController : MonoBehaviour
             {
                 if (calcLift <= 0)
                 {
-                    liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
+                    //liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation) + staticLiftForce;
+                    liftForce = (Vector3.up * liftMultiplier * -calcLift) + staticLiftForce;
                     Debug.Log("here goes up");
                     //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue * speed / speedRelation);
+                    if(rb.velocity.z > 5)
+                    {
+                        rb.AddForce((-Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue)/10);
+                    }
                 }
                 else if (calcLift > 0)
                 {
-                    liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation);
+                    //liftForce = (Vector3.up * liftMultiplier * -calcLift * speed / speedRelation);
+                    liftForce = (Vector3.up * liftMultiplier * -calcLift );
                     //rb.AddForce(Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingDownValue * speed / speedRelation);
+                    rb.AddForce((Vector3.forward * Mathf.Abs(calcLift) * additionalForceOnGoingUpValue) / 10);
+                    
                 }
                 rb.AddForce(liftForce);
             }
@@ -377,7 +385,7 @@ public class CartController : MonoBehaviour
                         activeWing.SetActive(true);
                         //change parameters here
                         haveWings = true;
-                        liftMultiplier = 6;
+                        liftMultiplier = 5.5f;
                         break;
 
                     case 3:
@@ -389,7 +397,7 @@ public class CartController : MonoBehaviour
                         activeWing.SetActive(true);
                         //change parameters here
                         haveWings = true;
-                        liftMultiplier = 8;
+                        liftMultiplier = 6;
                         break;
 
                     default:

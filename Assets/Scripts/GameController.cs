@@ -17,6 +17,7 @@ public class GameController : MonoBehaviour
     public GameObject cart;
     private Rigidbody cartRB;
     private CartController cartControl;
+    public ShopController shopController;
     public GameObject startPos;
     public GameObject targetPos;
     private float distance;
@@ -29,6 +30,7 @@ public class GameController : MonoBehaviour
     public Vector3 forkStartingPos;
     public GameObject modificationSpot;
     public bool canModify = false;
+    public GameObject recordLandingIndicator;
 
     public TextMesh recordAltitudeText;
     public TextMesh recordDistanceText;
@@ -43,9 +45,18 @@ public class GameController : MonoBehaviour
     public GameObject VRRigShopPlace;
     public GameObject VRRig;
     public GameObject VRRigRaycast;
+    public GameObject playerChair;
 
     public MoveButton goToShopButton;
     public MoveButton goToCartButton;
+
+    public AudioSource noiseSource;
+    public AudioSource boosterSource;
+    public AudioSource effectSource;
+    public AudioSource landingStartingSource;
+    public AudioClip buttonClick;
+    public AudioClip landingSound;
+    public AudioClip startingSound;
     void Start()
     {
         cartRB = cart.GetComponent<Rigidbody>();
@@ -117,12 +128,14 @@ public class GameController : MonoBehaviour
         goToShopButton.canPress = false;
         buttons[2].SetAvailable();
         buttons[3].SetUnavailable();
+        PlayStartingSound();
     }
     public void Launched() // called once the cart reaches target pos at the ramp
     {
         cartControl.flying = true;
         cartRB.useGravity = true;
         fork.transform.parent = ramp.transform;
+        noiseSource.Play();
     }
     public void SetupStart() // setups cart before the launch
     {
@@ -147,6 +160,7 @@ public class GameController : MonoBehaviour
         cartRB.drag = cartControl.dragValue;
         goToShopButton.canPress = true;
         cartControl.SetStatic(false);
+        playerChair.SetActive(false);
     }
     public void SetupModPhase()// setups modification phase for the cart
     {
@@ -164,6 +178,7 @@ public class GameController : MonoBehaviour
         cart.transform.position = modificationSpot.transform.position;
         cart.transform.rotation = Quaternion.Euler(0, 0, 0);
         canModify = true;
+        playerChair.SetActive(true);
     }
     public void ChangeGravity(float down)
     {
@@ -192,6 +207,9 @@ public class GameController : MonoBehaviour
         cartRB.drag = 2;
         AddMoney(maxDistance, cartControl.maxAltitude);
         SetScoreDisplay(overallMaxDistance, cartControl.overallMaxAltitude, maxDistance, cartControl.maxAltitude,money,lastEarnedMoney);
+        noiseSource.Stop();
+        SetRecordIndicator();
+        PlayLandingSound();
     }
     public void SetScoreDisplay(float recordDist, float recordAlt, float dist, float alt, float money, float earnedMoney)
     {
@@ -210,6 +228,8 @@ public class GameController : MonoBehaviour
         VRRig.transform.rotation = VRRigShopPlace.transform.rotation;
         VRRigRaycast.SetActive(true);
         SetupModPhase();
+        shopController.CheckAllDisplays();
+        shopController.CheckAllButtons();
         Debug.Log("jumped to shop");
     }
     public void ChangeModeToCart()
@@ -233,16 +253,39 @@ public class GameController : MonoBehaviour
         cartControl.StartRocketBoost();
         buttons[2].SetUnavailable();
         buttons[3].SetAvailable();
+        boosterSource.Play();
     }
     public void StopBoost()
     {
         cartControl.StopRocketBoost();
         buttons[2].SetAvailable();
         buttons[3].SetUnavailable();
+        boosterSource.Stop();
     }
     public void NoBoostFuel()
     {
         buttons[2].SetUnavailable();
         buttons[3].SetUnavailable();
+        boosterSource.Stop();
+    }
+    public void PlayButtonClickSound()
+    {
+        effectSource.clip = buttonClick;
+        effectSource.Play();
+    }
+
+    public void SetRecordIndicator()
+    {
+        recordLandingIndicator.transform.position = new Vector3(0,0,overallMaxDistance);
+    }
+    public void PlayLandingSound()
+    {
+        landingStartingSource.clip = landingSound;
+        landingStartingSource.Play();
+    }
+    public void PlayStartingSound()
+    {
+        landingStartingSource.clip = startingSound;
+        landingStartingSource.Play();
     }
 }

@@ -44,6 +44,7 @@ public class ButtonController : MonoBehaviour
             {
                 gameController.StopBoost();
             }
+            gameController.PlayButtonClickSound();
         }
     }
     public void UnpressButton()

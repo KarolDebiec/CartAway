@@ -29,6 +29,7 @@ public class MoveButton : MonoBehaviour
             {
                 gameController.ChangeModeToCart();
             }
+            gameController.PlayButtonClickSound();
         }
     }
     public void UnpressButton()
